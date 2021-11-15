@@ -80,7 +80,7 @@ def unit_propagation(formula):
                 unit_clauses.append(clause)
     return formula, assignment
 
-def backtracking(formula, assignment):
+def dpll(formula, assignment):
     #pure_literal has to be implemented
 
 
@@ -102,17 +102,17 @@ def backtracking(formula, assignment):
     counted_literals = dict_literal(formula)
     variable = list(counted_literals)[0]
     potential_assignment = assignment + [variable]
-    solution = backtracking(boolean_constraint_propagation(formula, variable), potential_assignment)
+    solution = dpll(boolean_constraint_propagation(formula, variable), potential_assignment)
 
     # if literal assignment of chosen variable did not satisfy then try -assignment for the variable
     if not solution:
         potential_assignment = assignment + [-variable]
-        solution = backtracking(boolean_constraint_propagation(formula, -variable), potential_assignment)
+        solution = dpll(boolean_constraint_propagation(formula, -variable), potential_assignment)
 
     return solution
 
 cnf, num_variables, num_clauses = parse('sudoku-combined.txt')
-solution = backtracking(cnf, [])
+solution = dpll(cnf, [])
 
 if solution:
     solution.sort(key=abs)
