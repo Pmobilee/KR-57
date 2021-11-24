@@ -23,10 +23,21 @@ def load_txt16(data): # transform a sudoku into cnf - can generalize this method
             #print(i*17*17 + j*17 + d)
             data = data[1:]
     return cnf
+
 def load_txt9(data): # transform a sudoku into cnf - can generalize this method by adding a dimension param for the 'for' loop
     cnf = []
     for i in range(1, 10):
         for j in range(1, 10):
+            if data[0] != '.':
+                d = int(data[0])
+                cnf.append([i*10*10 + j*10 + d])
+            data = data[1:]
+    return cnf
+
+def load_txt4(data): # transform a sudoku into cnf - can generalize this method by adding a dimension param for the 'for' loop
+    cnf = []
+    for i in range(1, 5):
+        for j in range(1, 5):
             if data[0] != '.':
                 d = int(data[0])
                 cnf.append([i*10*10 + j*10 + d])
@@ -75,6 +86,8 @@ def dict_literal(formula):
 def dlis(formula):
     dict = dict_literal(formula)
     dict = sorted(dict.items(), key=lambda x: x[1], reverse=True)
+    clause = random.choice(dict)
+    dict = clause[0]
     return dict
 
 def jeroslow(formula):
@@ -86,6 +99,7 @@ def jeroslow(formula):
             else:
                 dict[literal] = 2^(-abs(len(clause)))
     dict = sorted(dict.items(), key=lambda x: x[1], reverse=True)
+    dict = dict[0][0]
     return dict
 
 def mom(formula):
@@ -112,7 +126,7 @@ def mom(formula):
 
 def heuristics_dict(heuristic):
     heuristics = {
-        'S'    : dlis,
+        'S1'    : dlis,
         'S2'   : jeroslow,
         'S3'    : mom,
     }
@@ -157,7 +171,9 @@ def unit_propagation(formula):
             unit_clauses.append(clause)
 
     while unit_clauses:
+
         unit = unit_clauses[0]
+
         formula = boolean_constraint_propagation(formula, unit[0])
         assignment += [unit[0]]
         if formula == -1:
@@ -197,11 +213,12 @@ def pure_(formula):
                 pures.append(key)
     return formula, assignment
 
-def dpll(formula, assignment):
+def dpll(formula, assignment,heuristic):
 
     #unit_clauses
     formula, unit_assignment = unit_propagation(formula)
     #add all assignment from unit_clauses to solution assignment
+
     assignment = assignment + unit_assignment
     #if bcp found inconsistency, variable assignment is not an potential solution
     if formula == - 1:
@@ -222,24 +239,22 @@ def dpll(formula, assignment):
   #     return assignment
 
     #choose which variable should be explored first (no heuristic yet) creates a dictionary with key = literal and value = counted times in formula
-    counted_literals = dict_literal(formula)
-    variable = list(counted_literals)[0]
+    variable = heuristic(formula)
     potential_assignment = assignment + [variable]
-    solution = dpll(boolean_constraint_propagation(formula, variable), potential_assignment)
+    solution = dpll(boolean_constraint_propagation(formula, variable), potential_assignment,heuristic)
 
     # if literal assignment of chosen variable did not satisfy then try -assignment for the variable
     if not solution:
         global backtrack
         backtrack += 1
         potential_assignment = assignment + [-variable]
-        solution  = dpll(boolean_constraint_propagation(formula, -variable), potential_assignment)
-
+        solution  = dpll(boolean_constraint_propagation(formula, -variable), potential_assignment,heuristic)
     return solution
 
 
-def run_sudoku(cnf):
+def run_sudoku(cnf,heuristic):
     start_time = time.time()
-    solution = dpll(cnf, [])
+    solution = dpll(cnf, [],heuristic)
     end_time = time.time() - start_time
     global backtrack
     bk = backtrack
@@ -253,12 +268,13 @@ def run_sudoku(cnf):
 
     return end_time, success, bk
 
-def experiment():
+def experiment(heuristickey):
+    heuristic = heuristics_dict(heuristickey)
     total_runtime = 0
     total_success = 0
     total_unit_clauses = 0
     total_backtracks = 0
-
+    size = 0
     num_list = []
     success_list = []
     runtime_list = []
@@ -270,34 +286,44 @@ def experiment():
             if len(line) == 0:
                 continue
             if len(line) == 82:
-
                 line =  line[:-1]
-
             sudoku_list.append(line)
 
-    with open('sudokus/16x16.txt') as file:
+#    with open('sudokus/16x16.txt') as file:
+#        for line in file:
+#            if len(line) == 0:
+#                continue
+#            if len(line) == 257:
+#                line = line[:-1]
+#            sudoku_list.append(line)
+    with open('sudokus/4x4.txt') as file:
         for line in file:
             if len(line) == 0:
                 continue
-            if len(line) == 257:
+            if len(line) == 17:
                 line = line[:-1]
-            sudoku_list.append(line)
+            if len(line) == 16:
+                sudoku_list.append(line)
 
 
 # HERE CAN YOU DETERMINE HOW MANY SUDOKUS TO PUT IN THE CSV
-    for i in range(0,10):
+    for i in range(len(sudoku_list)):
         if len(sudoku_list[i]) == 256:
-
+            size = 16
             sudoku = load_txt16(sudoku_list[i])
             rules = load_dimacs('sudokus/sudoku-rules-16x16.txt')
             cnf = sudoku + rules
         if len(sudoku_list[i]) == 81:
+            size = 9
             sudoku = load_txt9(sudoku_list[i])
             rules = load_dimacs('sudokus/sudoku-rules.txt')
             cnf = sudoku + rules
-
-
-        runtime, success, backtrack = run_sudoku(cnf)
+        if len(sudoku_list[i]) == 16:
+            size = 4
+            sudoku = load_txt4(sudoku_list[i])
+            rules = load_dimacs('sudokus/sudoku-rules-4x4.txt')
+            cnf = sudoku + rules
+        runtime, success, backtrack = run_sudoku(cnf,heuristic)
      #   total_unit_clauses = + unit_clauses
         total_runtime += runtime
         total_success += success
@@ -309,14 +335,21 @@ def experiment():
         backtrack_list.append(backtrack)
         average_backtrack = total_backtracks / len(sudoku_list)
         success_ratio = total_success / len(sudoku_list)
-
+    if heuristickey == "S1":
+        ALGORITHM = "DPLL"
+    if heuristickey == "S2":
+        ALGORITHM = "Jeroslow"
+    if heuristickey == "S3":
+        ALGORITHM = "MOM"
     print('Time elapsed: ', total_runtime, 'Success: ', total_success)
     sudokuframe = pd.DataFrame(
-        {'num': num_list, 'runtime': runtime_list, 'success': success_list, "number of backtracks": backtrack_list})
+        {'num': num_list, 'runtime': runtime_list, 'success': success_list, "number of backtracks": backtrack_list,"size" : size, "heuristics": ALGORITHM})
     sudokuframe.to_csv(f'{ALGORITHM}.csv')
 
 
-experiment()
+experiment("S1")
+experiment("S2")
+experiment("S3")
 
 #cnf, num_variables, num_clauses = parse('sudoku-combined.txt')
 #solution = dpll(cnf, [])
