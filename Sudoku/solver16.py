@@ -8,6 +8,9 @@ Created on Tue Nov 23 14:48:51 2021
 import random
 import sys
 import time
+import pandas as pd
+
+ALGORITHM = 'Normal DPLL'
 
 
 # def load_txt16(file): # transform a sudoku into cnf - can generalize this method by adding a dimension param for the 'for' loop
@@ -210,7 +213,7 @@ with open('C:/Users/Pablo/Desktop/Pablo/knowledge representation/project1/Sudoku
         line.rstrip()
         sudoku_list.append(line)
         
-for i in range(10):
+for i in range(5):
     sudoku = load_txt16(sudoku_list[i])
     rules = load_dimacs('C:/Users/Pablo/Desktop/Pablo/knowledge representation/project1/SudokuSAT/SudokuSAT/sat_tests/sudoku_dimacs/sudoku-rules-16x16.txt')
     cnf = sudoku + rules
@@ -227,4 +230,6 @@ for i in range(10):
 
     success_ratio = total_success / len(sudoku_list)
 print('Time elapsed: ',total_runtime , 'Success: ', total_success)
+sudokuframe = pd.DataFrame({'num':num_list, 'runtime':runtime_list, 'success': success_list})
+sudokuframe.to_csv(f'{ALGORITHM}.csv')
 
