@@ -1,8 +1,10 @@
 import random
 import sys
+import time
 
 num_variables = int()
 num_clauses = int()
+backtrack = 0
 
 
 def write_sudoku(solution):
@@ -28,8 +30,57 @@ def dict_literal(formula):
                 dict[literal] += 1
             else:
                 dict[literal] = 1
-
     return dict
+
+def dlis(formula):
+    dict = dict_literal(formula)
+    dict = sorted(dict.items(), key=lambda x: x[1], reverse=True)
+    return dict
+
+def jeroslow(formula):
+    dict = {}
+    for clause in formula:
+        for literal in clause:
+            if literal in dict:
+                dict[literal] += 2^(-abs(len(clause)))
+            else:
+                dict[literal] = 2^(-abs(len(clause)))
+    dict = sorted(dict.items(), key=lambda x: x[1], reverse=True)
+    return dict
+
+def mom(formula):
+    min_len = min(map(len, formula))
+    app = {}
+    for clause in formula:
+        if len(clause) == min_len:
+            for literal in clause:
+                if literal in app:
+                    app[literal] += 1
+                else:
+                    app[literal] = 1
+    mom_value_max = 0
+    keys = app.keys()
+    for i in keys:
+        try:
+            mom_value_new = (app.get(i) + app.get(-i))*2 + app.get(i) + app.get(-i)
+            if mom_value_new > mom_value_max:
+                mom_value_max = mom_value_new
+                mom_best = i
+        except:
+            continue
+    return mom_best
+
+def heuristics_dict(heuristic):
+    heuristics = {
+        'S'    : jeroslow_wang,
+        'S2'   : random_selection,
+        'S3'    : most_often,
+    }
+    try:
+        return heuristics[heuristic]
+    except:
+        sys.exit("ERROR: '{}' Not valid heuristic.".format(heuristic) +
+                 "\nValid heuristics: {}".format(heuristics.keys()))
 
 def parse(filename):
     clauses = []
@@ -46,10 +97,8 @@ def parse(filename):
 
 def boolean_constraint_propagation(formula, unit):
     modified = []
-#    out = []
     for clause in formula:
         if unit in clause:
-#            out.append(clause)
             continue
         if -unit in clause:
             new_clause = [x for x in clause if x != -unit]
@@ -109,8 +158,6 @@ def pure_(formula):
     return formula, assignment
 
 def dpll(formula, assignment):
-    #pure_literal has to be implemented
-    #formula, pure_assignment = pure_literal(formula)
 
     #unit_clauses
     formula, unit_assignment = unit_propagation(formula)
@@ -124,9 +171,7 @@ def dpll(formula, assignment):
     if not formula:
         return assignment
 
-
     formula, pure_assign = pure_(formula)
-
     assignment = assignment + pure_assign
     #if bcp found inconsistency, variable assignment is not an potential solution
     if formula == - 1:
@@ -144,13 +189,34 @@ def dpll(formula, assignment):
 
     # if literal assignment of chosen variable did not satisfy then try -assignment for the variable
     if not solution:
+        global backtrack
+        backtrack += 1
         potential_assignment = assignment + [-variable]
         solution = dpll(boolean_constraint_propagation(formula, -variable), potential_assignment)
 
     return solution
 
-cnf, num_variables, num_clauses = parse('sudoku-combined2.txt')
 
+def run_sudoku(cnf):
+    start_time = time.time()
+    solution = dpll(cnf, [])
+    end_time = time.time() - start_time
+    global count
+    global backtrack
+    if solution:
+        solution.sort(key=abs)
+        # write_sudoku(solution)
+        success = 1
+    else:
+        success = 0
+
+    unit_clauses = count
+    backtrack_number = backtrack
+    count = 0
+    backtrack = 0
+    return end_time, success, unit_clauses, backtrack_number
+
+cnf, num_variables, num_clauses = parse('sudoku-combined.txt')
 solution = dpll(cnf, [])
 
 if solution:
@@ -161,11 +227,3 @@ if solution:
     #solution needs to be written to a file with name filein.out
 else:
     print('UNSATISFIABLE')
-
-# need to write a main works with "command SAT -Sn inputfile , for example: SAT -S2 sudoku_nr_10 , where SAT is the (compulsory) name of your program,
-# n=1 for the basic DP and n=2 or 3 for your two other strategies, and the input file is the concatenation of all required input clauses
-# (in your case: sudoku rules + given puzzle).
-#
-#
-#
-#
