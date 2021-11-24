@@ -29,7 +29,7 @@ for clause in result:
     variables_dimacs.append(clause)
 
 
-with open('sudoku-rules.txt', 'r') as f:
+with open('sudokus/sudoku-rules.txt', 'r') as f:
     data = f.read().splitlines()
     data1 = data[1:]
 
