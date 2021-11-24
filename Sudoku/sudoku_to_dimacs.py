@@ -1,7 +1,8 @@
 from numpy import sqrt
 
 file = ".94...13..............76..2.8..1.....32.........2...6.....5.4.......8..7..63.4..8"
-
+#difficult sudoku
+#file = ".18...7.....3..2...7...........71...6......4.3........4..5....3.2..8...........6."
 variables_no = int(sqrt(len(file)))
 variables = []
 
@@ -33,7 +34,7 @@ with open('sudoku-rules.txt', 'r') as f:
     data1 = data[1:]
 
 
-with open('sudoku-example.txt', 'w') as f:
+with open('sudoku-example2.txt', 'w') as f:
     f.write(f"p cnf {variables_dimacs} {len(result)} \n")
     for line in result:
         f.write(line)
@@ -41,7 +42,7 @@ with open('sudoku-example.txt', 'w') as f:
 
 data1+= result
 
-with open('sudoku-combined.txt', 'w') as fp:
+with open('sudoku-combined2.txt', 'w') as fp:
     fp.write(f"p cnf 729 {len(data) + len(result)-1 } \n")
     for line in data1:
         fp.write(line)

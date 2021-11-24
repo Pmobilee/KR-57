@@ -28,6 +28,7 @@ def dict_literal(formula):
                 dict[literal] += 1
             else:
                 dict[literal] = 1
+
     return dict
 
 def parse(filename):
@@ -80,16 +81,53 @@ def unit_propagation(formula):
                 unit_clauses.append(clause)
     return formula, assignment
 
+
+def pure_(formula):
+    dict= dict_literal(formula)
+    keys = dict.keys()
+    pures = []
+    assignment = []
+    for key in keys:
+        if -key in keys:
+            continue
+        else:
+            pures.append(key)
+    while pures:
+        pure = pures[0]
+        formula = boolean_constraint_propagation(formula, pures[0])
+        assignment += [pure[0]]
+        if formula == -1:
+            return -1, []
+        if not formula:
+            return formula, assignment
+        pures = []
+        for key in keys:
+            if -key in keys:
+                continue
+            else:
+                pures.append(key)
+    return formula, assignment
+
 def dpll(formula, assignment):
     #pure_literal has to be implemented
-
-
+    #formula, pure_assignment = pure_literal(formula)
 
     #unit_clauses
     formula, unit_assignment = unit_propagation(formula)
     #add all assignment from unit_clauses to solution assignment
     assignment = assignment + unit_assignment
+    #if bcp found inconsistency, variable assignment is not an potential solution
+    if formula == - 1:
+        return []
 
+    #if all clauses satisfied
+    if not formula:
+        return assignment
+
+
+    formula, pure_assign = pure_(formula)
+
+    assignment = assignment + pure_assign
     #if bcp found inconsistency, variable assignment is not an potential solution
     if formula == - 1:
         return []
@@ -111,7 +149,8 @@ def dpll(formula, assignment):
 
     return solution
 
-cnf, num_variables, num_clauses = parse('sudoku-combined.txt')
+cnf, num_variables, num_clauses = parse('sudoku-combined2.txt')
+
 solution = dpll(cnf, [])
 
 if solution:
@@ -126,6 +165,7 @@ else:
 # need to write a main works with "command SAT -Sn inputfile , for example: SAT -S2 sudoku_nr_10 , where SAT is the (compulsory) name of your program,
 # n=1 for the basic DP and n=2 or 3 for your two other strategies, and the input file is the concatenation of all required input clauses
 # (in your case: sudoku rules + given puzzle).
-
-
-
+#
+#
+#
+#
