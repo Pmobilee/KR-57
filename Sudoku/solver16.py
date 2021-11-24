@@ -115,6 +115,7 @@ def boolean_constraint_propagation(formula, unit):
     return modified
 
 count = 0
+backtrack = 0
 
 def unit_propagation(formula):
     assignment = []
@@ -166,6 +167,8 @@ def dpll(formula, assignment):
 
     # if literal assignment of chosen variable did not satisfy then try -assignment for the variable
     if not solution:
+        global backtrack
+        backtrack += 1
         potential_assignment = assignment + [-variable]
         solution = dpll(boolean_constraint_propagation(formula, -variable), potential_assignment)
 
@@ -177,7 +180,7 @@ def run_sudoku(cnf):
     solution = dpll(cnf, [])
     end_time =  time.time() - start_time
     global count
-    
+    global backtrack
     if solution:
         solution.sort(key=abs)
         #print(solution)
@@ -190,8 +193,10 @@ def run_sudoku(cnf):
         success = 0
     
     unit_clauses = count
+    backtrack_number = backtrack
     count = 0
-    return end_time, success, unit_clauses
+    backtrack = 0
+    return end_time, success, unit_clauses, backtrack_number
 
 
 # need to write a main works with "command SAT -Sn inputfile , for example: SAT -S2 sudoku_nr_10 , where SAT is the (compulsory) name of your program,
@@ -201,35 +206,39 @@ def run_sudoku(cnf):
 total_runtime = 0
 total_success = 0
 total_unit_clauses = 0
+total_backtracks = 0
 
 num_list = []
 success_list = []
 runtime_list = []
-
+backtrack_list = []
 sudoku_list = []
 
-with open('C:/Users/Pablo/Desktop/Pablo/knowledge representation/project1/SudokuSATSolver-main/SudokuSATSolver-main/test sudokus/16x16.txt') as file:
+with open('sudokus/16x16.txt') as file:
     for line in file:
         line.rstrip()
         sudoku_list.append(line)
         
-for i in range(5):
+for i in range(2):
     sudoku = load_txt16(sudoku_list[i])
-    rules = load_dimacs('C:/Users/Pablo/Desktop/Pablo/knowledge representation/project1/SudokuSAT/SudokuSAT/sat_tests/sudoku_dimacs/sudoku-rules-16x16.txt')
+    rules = load_dimacs('sudokus/sudoku-rules-16x16.txt')
     cnf = sudoku + rules
     
     
-    runtime, success, unit_clauses = run_sudoku(cnf)
+    runtime, success, unit_clauses, backtrack = run_sudoku(cnf)
     total_unit_clauses =+ unit_clauses
     total_runtime += runtime
     total_success += success
+    total_backtracks += backtrack
 
-    num_list.append(line)
+    num_list.append(sudoku_list[i])
     success_list.append(success)
     runtime_list.append(runtime)
-
+    backtrack_list.append(backtrack)
+    average_backtrack = total_backtracks / len(sudoku_list)
     success_ratio = total_success / len(sudoku_list)
+
 print('Time elapsed: ',total_runtime , 'Success: ', total_success)
-sudokuframe = pd.DataFrame({'num':num_list, 'runtime':runtime_list, 'success': success_list})
+sudokuframe = pd.DataFrame({'num':num_list, 'runtime':runtime_list, 'success': success_list, "number of backtracks": backtrack_list})
 sudokuframe.to_csv(f'{ALGORITHM}.csv')
 
