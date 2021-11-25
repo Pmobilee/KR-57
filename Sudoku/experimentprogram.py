@@ -326,7 +326,7 @@ def experiment(heuristickey):
 
 
 # HERE CAN YOU DETERMINE HOW MANY SUDOKUS TO PUT IN THE CSV
-    for i in range(500):
+    for i in range(len(sudoku_list)):
         if len(sudoku_list[i]) == 256:
             size_list.append(16)
             sudoku = load_txt16(sudoku_list[i])
@@ -368,9 +368,9 @@ def experiment(heuristickey):
     sudokuframe.to_csv(f'{ALGORITHM}.csv')
 
 
-#experiment("S1")
+experiment("S1")
 experiment("S2")
-#experiment("S3")
+experiment("S3")
 experiment("S4")
 
 #cnf, num_variables, num_clauses = parse('sudoku-combined.txt')
