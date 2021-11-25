@@ -99,8 +99,25 @@ def jeroslow(formula):
             else:
                 dict[literal] = 2^(-abs(len(clause)))
     dict = sorted(dict.items(), key=lambda x: x[1], reverse=True)
-    dict = dict[0][0]
-    return dict
+    return dict[0][0]
+
+def jeroslowquick(formula):
+    dict = {}
+    for clause in formula:
+        for literal in clause:
+            if literal in dict:
+                dict[literal] += 2^(-abs(len(clause)))
+            else:
+                dict[literal] = 2^(-abs(len(clause)))
+    dict = sorted(dict.items(), key=lambda x: x[1], reverse=True)
+    max = dict[0][1]
+    for i in range(len(dict)):
+        choice = dict[i][0]
+        if choice < 0 and dict[i][1] == max:
+            continue
+        return choice
+    return dict[0][0]
+
 
 def mom(formula):
     min_len = min(map(len, formula))
@@ -129,6 +146,7 @@ def heuristics_dict(heuristic):
         'S1'    : dlis,
         'S2'   : jeroslow,
         'S3'    : mom,
+        'S4'    :jeroslowquick
     }
     try:
         return heuristics[heuristic]
@@ -280,6 +298,7 @@ def experiment(heuristickey):
     runtime_list = []
     backtrack_list = []
     sudoku_list = []
+    size_list = []
 
     with open('sudokus/1000 sudokus.txt') as file:
         for line in file:
@@ -296,30 +315,30 @@ def experiment(heuristickey):
 #            if len(line) == 257:
 #                line = line[:-1]
 #            sudoku_list.append(line)
-    with open('sudokus/4x4.txt') as file:
-        for line in file:
-            if len(line) == 0:
-                continue
-            if len(line) == 17:
-                line = line[:-1]
-            if len(line) == 16:
-                sudoku_list.append(line)
+#   with open('sudokus/4x4.txt') as file:
+#       for line in file:
+#           if len(line) == 0:
+#               continue
+#           if len(line) == 17:
+#               line = line[:-1]
+#           if len(line) == 16:
+#               sudoku_list.append(line)
 
 
 # HERE CAN YOU DETERMINE HOW MANY SUDOKUS TO PUT IN THE CSV
-    for i in range(len(sudoku_list)):
+    for i in range(500):
         if len(sudoku_list[i]) == 256:
-            size = 16
+            size_list.append(16)
             sudoku = load_txt16(sudoku_list[i])
             rules = load_dimacs('sudokus/sudoku-rules-16x16.txt')
             cnf = sudoku + rules
         if len(sudoku_list[i]) == 81:
-            size = 9
+            size_list.append(9)
             sudoku = load_txt9(sudoku_list[i])
             rules = load_dimacs('sudokus/sudoku-rules.txt')
             cnf = sudoku + rules
         if len(sudoku_list[i]) == 16:
-            size = 4
+            size_list.append(4)
             sudoku = load_txt4(sudoku_list[i])
             rules = load_dimacs('sudokus/sudoku-rules-4x4.txt')
             cnf = sudoku + rules
@@ -336,20 +355,23 @@ def experiment(heuristickey):
         average_backtrack = total_backtracks / len(sudoku_list)
         success_ratio = total_success / len(sudoku_list)
     if heuristickey == "S1":
-        ALGORITHM = "DPLL"
+        ALGORITHM = "DPLL1"
     if heuristickey == "S2":
-        ALGORITHM = "Jeroslow"
+        ALGORITHM = "Jeroslow1"
     if heuristickey == "S3":
-        ALGORITHM = "MOM"
+        ALGORITHM = "MOM1"
+    if heuristickey == "S4":
+        ALGORITHM = "JWQuick"
     print('Time elapsed: ', total_runtime, 'Success: ', total_success)
     sudokuframe = pd.DataFrame(
-        {'num': num_list, 'runtime': runtime_list, 'success': success_list, "number of backtracks": backtrack_list,"size" : size, "heuristics": ALGORITHM})
+        {'num': num_list, 'runtime': runtime_list, 'success': success_list, "number of backtracks": backtrack_list,"size" : size_list, "heuristics": ALGORITHM})
     sudokuframe.to_csv(f'{ALGORITHM}.csv')
 
 
-experiment("S1")
+#experiment("S1")
 experiment("S2")
-experiment("S3")
+#experiment("S3")
+experiment("S4")
 
 #cnf, num_variables, num_clauses = parse('sudoku-combined.txt')
 #solution = dpll(cnf, [])
