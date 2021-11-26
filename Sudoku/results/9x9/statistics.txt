@@ -1,0 +1,18 @@
+Sudocu size: 9x9
+
+DPLL runtime mean: 0.6818966380755107 median: 0.6818966380755107, max: 0.6818966380755107, min: 0.6818966380755107
+DPLL backtracks mean: 3.62 median: 1.0, max: 67, min: 0
+Succes/Total ratio: 300/300
+MOM runtime mean: 0.6501940266291301 median: 0.6420609951019287, max: 0.825176477432251, min: 0.6107664108276367
+MOM backtracks mean: 1.6833333333333333 median: 1.0, max: 22, min: 0
+Succes/Total ratio: 300/300
+JW runtime mean: 0.7098534568150838 median: 0.6463519334793091, max: 3.0075223445892334, min: 0.6142559051513672
+JW backtracks mean: 12.59 median: 1.0, max: 516, min: 0
+Succes/Total ratio: 300/300
+
+Statistics:
+
+Runtime:
+DPLL vs MOM: Ttest_indResult(statistic=7.903838547894956, pvalue=1.3069878647559807e-14)
+DPLL vs JW: Ttest_indResult(statistic=-2.1918696598863674, pvalue=0.028773733477935885)
+MOM vs JW: Ttest_indResult(statistic=-4.849374218009548, pvalue=1.5812213622882078e-06)
