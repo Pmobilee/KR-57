@@ -1,9 +1,10 @@
-import statistics
+#import statistics
 import pandas as pd
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import os
+import csv
 from scipy import stats
 
 
@@ -71,21 +72,37 @@ def plot_boxplots_runtime(DPLL, MOM, JW, size, metric):
     #ax1.set_aspect(0.01, 0.01)
     if metric == 'runtime':
         plt.ylabel('runtime (s)')
-        plt.ylim(0, 250)
+        plt.ylim(0,0.007)
     elif metric == 'number of backtracks':
         plt.ylabel('backtracks (n)')
         # plt.ylim(-4, 4)
     plt.suptitle(f'{size} sudoku')
-    plt.savefig(f'D:/OneDrive/Desktop/STATISTICS/{size}_{metric}_boxplot.png')
+    plt.savefig(f'{size}_{metric}_boxplotThomas.png')
     # plt.show()
 
 
-DPLL = pd.read_csv('D:/OneDrive/Desktop/STATISTICS/DPLL.csv')
-MOM = pd.read_csv('D:/OneDrive/Desktop/STATISTICS/MOM.csv')
-JW = pd.read_csv('D:/OneDrive/Desktop/STATISTICS/Jeroslow.csv')
+
+
+
+#DPLL = pd.read_csv("results/16x16/DPLL.csv")
+#MOM = pd.read_csv('results/16x16/MOM.csv')
+#JW = pd.read_csv('results/16x16/Jeroslow.csv')
+
+
+DPLL = pd.read_csv("results/9x9/DPLL.csv")
+MOM = pd.read_csv('results/9x9/MOM.csv')
+JW = pd.read_csv('results/9x9/Jeroslow.csv')
+
+
+DPLL = pd.read_csv("results/4x4/DPLL.csv")
+MOM = pd.read_csv('results/4x4/MOM.csv')
+JW = pd.read_csv('results/4x4/Jeroslow.csv')
+
+
+
 
 # print(DPLL['runtime'])
-size = '16x16'
+size = '4x4'
 
 plot_boxplots_runtime(DPLL, MOM, JW, size , metric = 'runtime')
 plot_boxplots_runtime(DPLL, MOM, JW, size, metric = 'number of backtracks')
@@ -97,9 +114,11 @@ dpll_runtime = []
 dpll_success = list(DPLL['success'])
 dpll_backtracks = []
 
+
 MOM_runtime = []
 MOM_success = list(MOM['success'])
 MOM_backtracks = []
+
 
 JW_runtime = []
 JW_success = list(JW['success'])
@@ -139,7 +158,80 @@ JW_runtime = A['JW_runtime']
 JW_backtracks = A['JW_backtracks']
 
 
-print(f'DPLL runtime mean: {dpll_runtime.mean()} median: {dpll_runtime.mean()}, max: {dpll_runtime.mean()}, min: {dpll_runtime.mean()}')
+groupdpll = [0,0,0,0,0,0]
+groupMOM = [0,0,0,0,0,0]
+groupJW = [0,0,0,0,0,0]
+
+for i in range(len(dpll_runtime)):
+    if dpll_runtime[i] < 50:
+        groupdpll[0] +=1
+    elif dpll_runtime[i] < 70:
+        groupdpll[1] += 1
+    elif dpll_runtime[i] < 90:
+        groupdpll[2] += 1
+    elif dpll_runtime[i] < 110:
+        groupdpll[3] += 1
+    elif dpll_runtime[i] < 300:
+        groupdpll[4] +=1
+    else:
+        groupdpll[5] +=1
+
+for i in range(len(MOM_runtime)):
+    if MOM_runtime[i] < 50:
+        groupMOM[0] +=1
+    elif MOM_runtime[i] < 70:
+        groupMOM[1] += 1
+    elif MOM_runtime[i] < 90:
+        groupMOM[2] += 1
+    elif MOM_runtime[i] < 110:
+        groupMOM[3] += 1
+    elif MOM_runtime[i] < 300:
+        groupMOM[4] +=1
+    else:
+        groupMOM[5] += 1
+
+for i in range(len(JW_runtime)):
+    if JW_runtime[i] < 50:
+        groupJW[0] +=1
+    elif JW_runtime[i] < 70:
+        groupJW[1] += 1
+    elif JW_runtime[i] < 90:
+        groupJW[2] += 1
+    elif JW_runtime[i] < 110:
+        groupJW[3] += 1
+    elif JW_runtime[i] < 300:
+        groupJW[4] +=1
+    else:
+        groupJW[5] +=1
+
+labels = ['0-100', '100-200', "200-300", "300-400", "400-600", "big"]
+
+
+x = np.arange(len(labels))  # the label locations
+width = 0.3  # the width of the bars
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x - width, groupdpll, width, label='DPLL')
+rects2 = ax.bar(x , groupMOM, width, label='MOM')
+rects3 = ax.bar(x + width, groupJW, width, label='JW')
+
+
+# Add some text for labels, title and custom x-axis tick labels, etc.
+ax.set_ylabel('n')
+ax.set_title('Distribution of runtimes per Heuristic')
+
+ax.legend()
+
+
+
+
+fig.tight_layout()
+
+plt.show()
+
+
+
+print(f'DPLL runtime mean: {dpll_runtime.mean()} median: {dpll_runtime.median()}, max: {dpll_runtime.max()}, min: {dpll_runtime.min()}')
 print(f'DPLL backtracks mean: {dpll_backtracks.mean()} median: {dpll_backtracks.median()}, max: {dpll_backtracks.max()}, min: {dpll_backtracks.min()}')
 print(f'Succes/Total ratio: {dpll_success.count(1)}/{len(dpll_success)}')
 
@@ -157,26 +249,40 @@ print(f'Succes/Total ratio: {JW_success.count(1)}/{len(JW_success)}')
 print(f'\nStatistics:\n')
 
 print('Runtime:')
-print(f'DPLL vs MOM: {stats.ttest_ind(dpll_runtime, MOM_runtime)}')
-print(f'DPLL vs JW: {stats.ttest_ind(dpll_runtime, JW_runtime)}')
-print(f'MOM vs JW: {stats.ttest_ind(MOM_runtime, JW_runtime)}')
-
-list_mean_dpll = [0.00268, 0.68189, 154.129]
-list_mean_mom = [0.002696, 0.6501, 72.5721]
-list_mean_jw = [0.00268991152, 0.709853, 159.55735]
-list_gens = ['4x4', "9x9", "16x16"]
+print(f'DPLL vs MOM: {stats.mannwhitneyu(dpll_runtime, MOM_runtime, alternative="greater")}')
+print(f'DPLL vs JW: {stats.mannwhitneyu(dpll_runtime, JW_runtime,alternative="greater")}')
+print(f'MOM vs JW: {stats.mannwhitneyu(MOM_runtime, JW_runtime, alternative="less")}')
 
 
-plt.plot(list_gens,list_mean_dpll, 'g', label="DPLL")
-plt.plot(list_gens,list_mean_mom,'b' , label="MOM")
-plt.plot(list_gens,list_mean_jw,'r' , label="Jeroslow-Wang")
-
-
+list_mean_dpll = [2.68**(1/3), 681.89**(1/3), 67307**(1/3)]
+list_mean_mom = [2.696**(1/3), 642.1**(1/3), 63260**(1/3)]
+list_mean_jw = [2.68991152**(1/3), 646.3**(1/3), 81654**(1/3)]
+list_gens = [4, 9, 16]
+plt.plot(list_gens,list_mean_dpll, 'g', label="DPLL", marker ='o')
+plt.plot(list_gens,list_mean_mom,'b' , label="MOM",marker ='o')
+plt.plot(list_gens,list_mean_jw,'r' , label="Jeroslow-Wang",marker ='o')
 plt.legend(['DPLL', 'MOM', 'Jeroslow-Wang'], loc='lower right')
-plt.ylabel('runtime')
+plt.ylabel('Runtime^(1/3)')
 plt.xlabel('Sudoku size')
-plt.yscale('log')
-# plt.suptitle('Generational Fitness GA vs DE')
-plt.xticks(np.arange(0, 3, 1))
-plt.savefig('runtime_log.png')
+#plt.yscale('log')
+plt.suptitle('Sudoku Size Runtime')
+
+plt.savefig('runtime_log3.png')
+plt.show()
+
+
+list_mean_dpll = [0.00268**(1/3), .68189**(1/3), 673.07**(1/3)]
+list_mean_mom = [0.002696**(1/3), .6421**(1/3), 632.60**(1/3)]
+list_mean_jw = [0.0068991152**(1/3), .6463**(1/3), 816.54**(1/3)]
+list_gens = [4, 9, 16]
+plt.plot(list_gens,list_mean_dpll, 'g', label="DPLL", marker ='o')
+plt.plot(list_gens,list_mean_mom,'b' , label="MOM",marker ='o')
+plt.plot(list_gens,list_mean_jw,'r' , label="Jeroslow-Wang",marker ='o')
+plt.legend(['DPLL', 'MOM', 'Jeroslow-Wang'], loc='lower right')
+plt.ylabel('Runtime^(1/3)')
+plt.xlabel('Sudoku size')
+#plt.yscale('log')
+plt.suptitle('Sudoku Size Runtime')
+
+plt.savefig('runtime_log3.png')
 plt.show()
